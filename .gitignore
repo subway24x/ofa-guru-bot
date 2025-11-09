@@ -1,0 +1,13 @@
+# dependencies
+node_modules/
+
+# environment files
+.env
+
+# local data
+users.json
+userclubs.json
+cache.json
+
+# misc
+*.log
