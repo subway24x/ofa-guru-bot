@@ -1,3 +1,4 @@
+import "./keepalive.js";
 import { Client, GatewayIntentBits, Collection } from "discord.js";
 import fs from "fs";
 import path from "path";
