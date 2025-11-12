@@ -1,71 +1,25 @@
-import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
 import fs from "fs";
+import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
 
-const PLAYER_FILE = "./src/data/players.json";
-const USERS_FILE = "./src/data/users.json";
+export default {
+  data: new SlashCommandBuilder()
+    .setName("club")
+    .setDescription("View all players in your club."),
 
-function loadJSON(path) {
-  if (!fs.existsSync(path)) return [];
-  return JSON.parse(fs.readFileSync(path, "utf8"));
-}
+  async execute(interaction) {
+    const users = JSON.parse(fs.readFileSync("./src/data/users.json", "utf-8"));
+    const user = users.find(u => u.id === interaction.user.id);
 
-export const data = new SlashCommandBuilder()
-  .setName("club")
-  .setDescription("View all the players in your club!");
+    if (!user || user.cards.length === 0) {
+      await interaction.reply({ content: "You have no players in your club! Use /claim first.", ephemeral: true });
+      return;
+    }
 
-export async function execute(interaction) {
-  await interaction.deferReply();
+    const embed = new EmbedBuilder()
+      .setTitle(`${interaction.user.username}'s Club`)
+      .setDescription(user.cards.map(id => `• **${id}**`).join("\n"))
+      .setColor(0x00ff88);
 
-  const players = loadJSON(PLAYER_FILE);
-  const users = loadJSON(USERS_FILE);
-  const userId = interaction.user.id;
-
-  const user = users.find(u => u.id === userId);
-
-  if (!user || !user.cards || user.cards.length === 0) {
-    await interaction.editReply("You don't have any players in your club yet! Use `/claim` to get some.");
-    return;
+    await interaction.reply({ embeds: [embed] });
   }
-
-  const clubPlayers = players.filter(p => user.cards.includes(p.id));
-  if (clubPlayers.length === 0) {
-    await interaction.editReply("Your club seems empty or your saved players are missing from the database.");
-    return;
-  }
-
-  // group players by role
-  const groups = {
-    GKS: [],
-    DEFENDERS: [],
-    MIDFIELDERS: [],
-    STRIKERS: []
-  };
-
-  for (const p of clubPlayers) {
-    if (["GK"].includes(p.position)) groups.GKS.push(p);
-    else if (["CB", "LB", "RB", "LWB", "RWB"].includes(p.position)) groups.DEFENDERS.push(p);
-    else if (["CDM", "CM", "CAM", "RM", "LM"].includes(p.position)) groups.MIDFIELDERS.push(p);
-    else groups.STRIKERS.push(p);
-  }
-
-  // build sections
-  const makeSection = (title, arr) =>
-    arr.length > 0
-      ? `**${title}**\n${arr.map(p => `${p.username} — ${p.position} (${p.rating} • ${p.rarity.toUpperCase()})`).join("\n")}\n`
-      : "";
-
-  const description = [
-    makeSection("GKS", groups.GKS),
-    makeSection("DEFENDERS", groups.DEFENDERS),
-    makeSection("MIDFIELDERS", groups.MIDFIELDERS),
-    makeSection("STRIKERS", groups.STRIKERS)
-  ].filter(Boolean).join("\n");
-
-  const embed = new EmbedBuilder()
-    .setTitle(`${interaction.user.username}'s Club`)
-    .setDescription(description)
-    .setColor("#2b2d31")
-    .setTimestamp();
-
-  await interaction.editReply({ embeds: [embed] });
-}
+};

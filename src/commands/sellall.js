@@ -1,61 +1,27 @@
-import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
 import fs from "fs";
+import { SlashCommandBuilder } from "discord.js";
 
-const PLAYER_FILE = "./src/data/players.json";
-const USERS_FILE = "./src/data/users.json";
+export default {
+  data: new SlashCommandBuilder()
+    .setName("sellall")
+    .setDescription("Sell all your cards at once."),
 
-function loadJSON(path) {
-  if (!fs.existsSync(path)) return [];
-  return JSON.parse(fs.readFileSync(path, "utf8"));
-}
+  async execute(interaction) {
+    const users = JSON.parse(fs.readFileSync("./src/data/users.json", "utf-8"));
+    const user = users.find(u => u.id === interaction.user.id);
 
-function saveJSON(path, data) {
-  fs.writeFileSync(path, JSON.stringify(data, null, 2));
-}
+    if (!user || user.cards.length === 0) {
+      await interaction.reply({ content: "❌ You have no cards to sell.", ephemeral: true });
+      return;
+    }
 
-export const data = new SlashCommandBuilder()
-  .setName("sellall")
-  .setDescription("Sell all players in your club for coins.");
+    const soldCount = user.cards.length;
+    const earned = soldCount * 50000;
 
-export async function execute(interaction) {
-  await interaction.deferReply();
+    user.cards = [];
+    user.coins += earned;
 
-  const players = loadJSON(PLAYER_FILE);
-  const users = loadJSON(USERS_FILE);
-  const userId = interaction.user.id;
-
-  const user = users.find(u => u.id === userId);
-
-  if (!user || !user.cards || user.cards.length === 0) {
-    await interaction.editReply("You have no players to sell!");
-    return;
+    fs.writeFileSync("./src/data/users.json", JSON.stringify(users, null, 2));
+    await interaction.reply(`💰 You sold **${soldCount} cards** for **${earned.toLocaleString()} coins!**`);
   }
-
-  const ownedPlayers = players.filter(p => user.cards.includes(p.id));
-  let totalValue = 0;
-
-  for (const player of ownedPlayers) {
-    const sellValue = Math.floor(player.rating * 80);
-    totalValue += sellValue;
-  }
-
-  // clear cards
-  user.cards = [];
-  // also clear starters
-  user.starters = [];
-
-  // add coins
-  user.coins = (user.coins || 0) + totalValue;
-
-  saveJSON(USERS_FILE, users);
-
-  const embed = new EmbedBuilder()
-    .setTitle("💰 Sell All Players")
-    .setDescription(
-      `You sold all your players for **${totalValue.toLocaleString()} coins!**\nYour starters have been reset.`
-    )
-    .setColor("#FFD700")
-    .setTimestamp();
-
-  await interaction.editReply({ embeds: [embed] });
-}
+};

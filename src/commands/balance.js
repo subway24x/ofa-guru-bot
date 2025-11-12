@@ -1,20 +1,22 @@
-import { SlashCommandBuilder } from "discord.js";
 import fs from "fs";
+import { SlashCommandBuilder, EmbedBuilder } from "discord.js";
 
-export const data = new SlashCommandBuilder()
-  .setName("balance")
-  .setDescription("Check your coins and owned cards.");
+export default {
+  data: new SlashCommandBuilder()
+    .setName("balance")
+    .setDescription("Check your current coin balance."),
 
-export async function execute(interaction) {
-  const users = JSON.parse(fs.readFileSync("./src/data/users.json", "utf8"));
-  const user = users.find(u => u.id === interaction.user.id);
+  async execute(interaction) {
+    const users = JSON.parse(fs.readFileSync("./src/data/users.json", "utf-8"));
+    const user = users.find(u => u.id === interaction.user.id);
 
-  if (!user) {
-    await interaction.reply("❌ You don’t have any balance yet. Try `/claim` first!");
-    return;
+    const coins = user ? user.coins : 0;
+
+    const embed = new EmbedBuilder()
+      .setTitle(`${interaction.user.username}'s Balance`)
+      .setDescription(`💰 You have **${coins.toLocaleString()}** coins.`)
+      .setColor(0xf1c40f);
+
+    await interaction.reply({ embeds: [embed] });
   }
-
-  await interaction.reply(
-    `💰 **Coins:** $${user.coins.toLocaleString()}\n🃏 **Owned Cards:** ${user.cards.length}`
-  );
-}
+};
