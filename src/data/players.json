@@ -1,58 +1,99 @@
+
 [
-  {
-    "id": 1,
+  { 
     "username": "Sofiavonce",
     "position": "ST",
-    "rating": 90,
-    "rarity": "gold",
-    "image": "sofiavonce.png"
+    "cards": [
+      {
+        "id": "1a",
+        "rating": 90,
+        "rarity": "gold",
+        "image": "sofiavonce.png"
+      },
+      {
+        "id": "1b",
+        "rating": 92,
+        "rarity": "totw",
+        "image": "sofiavonce_totw.png"
+      }
+    ]
   },
   {
-    "id": 2,
     "username": "k5nel",
     "position": "CB",
-    "rating": 64,
-    "rarity": "bronze",
-    "image": "k5nel.png"
+    "cards": [
+      {
+        "id": "2a",
+        "rating": 64,
+        "rarity": "bronze",
+        "image": "k5nel.png"
+      }
+    ]
   },
   {
-    "id": 3,
     "username": "vociment",
     "position": "CB",
-    "rating": 74,
-    "rarity": "silver",
-    "image": "vociment.png"
+    "cards": [
+      {
+        "id": "3a",
+        "rating": 74,
+        "rarity": "silver",
+        "image": "vociment.png"
+      }
+    ]
   },
-    {
-    "id": 4,
+  {
     "username": "ponnumberone",
     "position": "CB",
-    "rating": 86,
-    "rarity": "gold",
-    "image": "ponnumberone.png"
+    "cards": [
+      {
+        "id": "4a",
+        "rating": 86,
+        "rarity": "gold",
+        "image": "ponnumberone.png"
+      }
+    ]
   },
-    {
-    "id": 5,
+  {
     "username": "sejiroa",
     "position": "CAM",
-    "rating": 84,
-    "rarity": "gold",
-    "image": "sejiroa.png"
+    "cards": [
+      {
+        "id": "5a",
+        "rating": 84,
+        "rarity": "gold",
+        "image": "sejiroa.png"
+      },
+      {
+        "id": "5b",
+        "rating": 92,
+        "rarity": "totw",
+        "image": "sejiroa_totw.png"
+      }
+    ]
   },
-    {
-    "id": 6,
+  {
     "username": "AndyPops34",
     "position": "CB",
-    "rating": 78,
-    "rarity": "gold",
-    "image": "AndyPops34.png"
+    "cards": [
+      {
+        "id": "6a",
+        "rating": 78,
+        "rarity": "gold",
+        "image": "AndyPops34.png"
+      }
+    ]
   },
-     {
-    "id": 7,
+  {
     "username": "sealeyisthebestgamep",
     "position": "GK",
-    "rating": 82,
-    "rarity": "gold",
-    "image": "sealeyisthebestgamep.png"
+    "cards": [
+      {
+        "id": "7a",
+        "rating": 82,
+        "rarity": "gold",
+        "image": "sealeyisthebestgamep.png"
+      }
+    ]
   }
 ]

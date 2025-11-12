@@ -1,81 +1,79 @@
-import { SlashCommandBuilder, AttachmentBuilder, EmbedBuilder } from "discord.js";
 import fs from "fs";
+import { EmbedBuilder } from "discord.js";
 
-export const data = new SlashCommandBuilder()
-  .setName("claim")
-  .setDescription("Claim a random player card!");
+const players = JSON.parse(fs.readFileSync("./src/data/players.json", "utf-8"));
 
-export async function execute(interaction) {
-  await interaction.deferReply();
+// Weighted rarities (optional but recommended)
+const rarityWeights = {
+  bronze: 40,
+  silver: 25,
+  gold: 20,
+  totw: 7,
+  toty: 5,
+  icon: 2
+};
 
-  try {
-    const players = JSON.parse(fs.readFileSync("./src/data/players.json", "utf8"));
-    const users = JSON.parse(fs.readFileSync("./src/data/users.json", "utf8"));
+function getWeightedRandomRarity() {
+  const total = Object.values(rarityWeights).reduce((a, b) => a + b, 0);
+  let random = Math.random() * total;
+  for (const [rarity, weight] of Object.entries(rarityWeights)) {
+    if (random < weight) return rarity;
+    random -= weight;
+  }
+}
 
-    const player = players[Math.floor(Math.random() * players.length)];
+export default {
+  data: {
+    name: "claim",
+    description: "Claim a random player card!"
+  },
+  async execute(interaction) {
+    const chosenRarity = getWeightedRandomRarity();
 
-    // Ensure user exists
-    let user = users.find(u => u.id === interaction.user.id);
-    if (!user) {
-      user = { id: interaction.user.id, username: interaction.user.username, coins: 0, cards: [] };
-      users.push(user);
-    }
+    // Find all cards across all players that match rarity
+    const possibleCards = players.flatMap((p) =>
+      p.cards
+        .filter((card) => card.rarity === chosenRarity)
+        .map((card) => ({ ...card, username: p.username, position: p.position }))
+    );
 
-    // Check if user already owns card
-    const alreadyOwns = user.cards.includes(player.id);
-    const value = calculateValue(player.rating, player.rarity);
-    const sellValue = Math.floor(value * (Math.random() * 0.2 + 0.15));
+    // Pick one at random
+    const player = possibleCards[Math.floor(Math.random() * possibleCards.length)];
 
-    let description, title;
+    const rarityColors = {
+      bronze: 0x8c7853,
+      silver: 0xc0c0c0,
+      gold: 0xffd700,
+      tots: 0x1e90ff,
+      toty: 0x00bfff,
+      icon: 0xffffff
+    };
 
-    if (alreadyOwns) {
-      // Duplicate reward
-      user.coins += sellValue;
-      title = `Duplicate! ${player.username} sold automatically 💰`;
-      description = `You already own **${player.username}**, so it sold for **$${formatNumber(sellValue)}**.`;
-    } else {
-      user.cards.push(player.id);
-      description = `**Value:** 💰 $${formatNumber(value)}\n**Sells for:** 💵 $${formatNumber(sellValue)}`;
-      title = `${player.username} joins your club!`;
-    }
+    // Calculate coin value (adjust to your system)
+    const baseValue = Math.floor(Math.random() * 250000 + 50000);
+    const multipliers = {
+      bronze: 1,
+      silver: 1.5,
+      gold: 2.5,
+      tots: 4,
+      toty: 5,
+      icon: 6
+    };
+    const value = Math.floor(baseValue * (multipliers[player.rarity] || 1));
+    const sellValue = Math.floor(value * 0.7);
 
-    fs.writeFileSync("./src/data/users.json", JSON.stringify(users, null, 2));
-
-    const cardImage = new AttachmentBuilder(`./assets/cards/${player.image}`);
     const embed = new EmbedBuilder()
-      .setTitle(title)
-      .setDescription(description)
-      .setColor(
-        player.rarity === "gold"
-          ? 0xffd700
-          : player.rarity === "silver"
-          ? 0xc0c0c0
-          : 0xcd7f32
+      .setTitle(`${player.username} joins your club!`)
+      .setDescription(
+        `⭐ ${player.rarity.toUpperCase()} CARD\n` +
+          `🏷️ Position: **${player.position}**\n` +
+          `💪 Rating: **${player.rating}**\n\n` +
+          `💰 Value: **${value.toLocaleString()} coins**\n` +
+          `🪙 Sells for: **${sellValue.toLocaleString()} coins**`
       )
-      .setImage(`attachment://${player.image}`)
-      .setFooter({ text: `${player.rarity.toUpperCase()} • ${player.rating} RATED` });
+      .setColor(rarityColors[player.rarity] || 0xffffff)
+      .setThumbnail(`attachment://${player.image}`);
 
-    await interaction.editReply({ embeds: [embed], files: [cardImage] });
-  } catch (err) {
-    console.error("Error in /claim:", err);
-    await interaction.editReply("❌ Something went wrong while claiming your card.");
+    await interaction.reply({ embeds: [embed] });
   }
-}
-
-function calculateValue(rating, rarity) {
-  let base;
-  switch (rarity.toLowerCase()) {
-    case "gold": base = 100_000; break;
-    case "silver": base = 10_000; break;
-    case "bronze": base = 1_000; break;
-    default: base = 5_000;
-  }
-  const value = base * Math.pow(1.15, rating - 60);
-  return Math.floor(value * (0.9 + Math.random() * 0.2));
-}
-
-function formatNumber(num) {
-  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(2)}M`;
-  if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
-  return num.toString();
-}
+};
