@@ -1,13 +1,19 @@
-import "dotenv/config";
 import { REST, Routes } from "discord.js";
 import fs from "fs";
+import "dotenv/config";
 
 const commands = [];
-const commandFiles = fs.readdirSync("./src/commands").filter(f => f.endsWith(".js"));
+
+const foldersPath = "./src/commands";
+const commandFiles = fs.readdirSync(foldersPath).filter(file => file.endsWith(".js"));
 
 for (const file of commandFiles) {
-  const { data } = await import(`./commands/${file}`);
-  commands.push(data.toJSON());
+  const { default: command } = await import(`./commands/${file}`);
+  if (command?.data) {
+    commands.push(command.data.toJSON());
+  } else {
+    console.warn(`⚠️ Skipped ${file}: missing "data" export`);
+  }
 }
 
 const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
@@ -20,5 +26,5 @@ try {
   );
   console.log("✅ Slash commands registered successfully!");
 } catch (error) {
-  console.error(error);
+  console.error("❌ Error deploying commands:", error);
 }
